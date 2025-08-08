@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espresso 2048</title>
+    <style>
+        /* Coffee-themed color palette */
+        :root {
+            --bg-color: #5D4037;
+            --board-color: #4E342E;
+            --tile-bg: #8D6E63;
+            --text-light: #EFEBE9;
+            --text-dark: #3E2723;
+            --button-color: #A1887F;
+            --button-hover: #BCAAA4;
+            --highlight: #D7CCC8;
+            --link-color: #BCAAA4;
+            --link-hover: #D7CCC8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%234E342E"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="%235D4037" stroke-width="1"/></svg>');
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 20px 0;
+            text-align: center;
+            color: var(--text-light);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        h1::after {
+            content: "☕";
+            position: absolute;
+            right: -40px;
+            top: 0;
+            font-size: 2.5rem;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .score-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .score-box {
+            background-color: var(--board-color);
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            flex: 1;
+        }
+
+        .score-title {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            opacity: 0.8;
+        }
+
+        .score-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+
+        .restart-button {
+            background-color: var(--button-color);
+            color: var(--text-dark);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .restart-button:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+        }
+
+        .game-board {
+            background-color: var(--board-color);
+            border-radius: 8px;
+            padding: 15px;
+            width: 100%;
+            aspect-ratio: 1/1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 15px;
+            position: relative;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            touch-action: none;
+        }
+
+        .tile {
+            background-color: var(--tile-bg);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-dark);
+            transition: all 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tile::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 50%);
+            z-index: 1;
+        }
+
+        /* Progressive coffee-brown colors for tiles */
+        .tile-2 {
+            background-color: #D7CCC8;
+        }
+
+        .tile-4 {
+            background-color: #BCAAA4;
+        }
+
+        .tile-8 {
+            background-color: #A1887F;
+            color: var(--text-light);
+        }
+
+        .tile-16 {
+            background-color: #8D6E63;
+            color: var(--text-light);
+        }
+
+        .tile-32 {
+            background-color: #795548;
+            color: var(--text-light);
+        }
+
+        .tile-64 {
+            background-color: #6D4C41;
+            color: var(--text-light);
+        }
+
+        .tile-128 {
+            background-color: #5D4037;
+            color: var(--text-light);
+        }
+
+        .tile-256 {
+            background-color: #4E342E;
+            color: var(--text-light);
+        }
+
+        .tile-512 {
+            background-color: #3E2723;
+            color: var(--text-light);
+        }
+
+        .tile-1024 {
+            background-color: #2E1B0E;
+            color: var(--text-light);
+        }
+
+        .tile-2048 {
+            background-color: #1A0D07;
+            color: var(--text-light);
+        }
+
+        .tile-merged {
+            animation: pop 0.2s ease-in-out;
+        }
+
+        .tile-new {
+            animation: appear 0.2s ease-in-out;
+        }
+
+        @keyframes appear {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(0.9);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .game-message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .game-message.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .game-message p {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--text-light);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-message button {
+            background-color: var(--button-color);
+            color: var(--text-dark);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 5px;
+        }
+
+        .game-message button:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+        }
+
+        .game-message .button-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .instructions {
+            margin-top: 20px;
+            text-align: center;
+            max-width: 500px;
+            color: var(--text-light);
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .branding {
+            margin-top: 30px;
+            text-align: center;
+            color: var(--highlight);
+            font-style: italic;
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .branding a {
+            background-color: var(--link-color);
+            color: var(--text-dark);
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.2s;
+        }
+
+        .branding a:hover {
+            background-color: var(--link-hover);
+            transform: translateY(-2px);
+        }
+
+        .high-score-note {
+            margin-top: 10px;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            opacity: 0.6;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h1::after {
+                right: -30px;
+                font-size: 1.8rem;
+            }
+            
+            .tile {
+                font-size: 1rem;
+            }
+            
+            .game-message p {
+                font-size: 1.5rem;
+            }
+            
+            .score-panel, .controls {
+                flex-direction: column;
+            }
+            
+            .score-box, .restart-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Espresso 2048</h1>
+    
+    <div class="game-container">
+        <div class="score-panel">
+            <div class="score-box">
+                <div class="score-title">Brew Score</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <button class="restart-button" id="restart-button">New Brew</button>
+        </div>
+        
+        <div class="game-board" id="game-board">
+            <!-- Tiles will be generated here by JavaScript -->
+        </div>
+        
+        <div class="game-message" id="game-message">
+            <p id="message-text"></p>
+            <div class="button-group">
+                <button id="continue-button">Keep Brewing</button>
+                <button id="new-game-button">Fresh Brew</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <p>Combine tiles to reach 2048!<br>
+        Use arrow keys or swipe gestures to move the tiles.</p>
+    </div>
+
+    <div class="high-score-note">
+        Highest Brew: <span id="high-score-display">0</span> (saved per device)
+    </div>
+
+    <div class="branding">
+        Gespresso ; it's time to <strong>BREW THE BLOCK</strong>
+        <a href="https://espressosys.com" target="_blank">espressosys.com</a>
+    </div>
+
+    <script>
+        // Game configuration
+        const config = {
+            size: 4, // 4x4 grid
+            winValue: 2048,
+            localStorageKey: 'espresso2048_highscore'
+        };
+
+        // Game state
+        let board = [];
+        let score = 0;
+        let highScore = 0;
+        let win = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        // DOM elements
+        const gameBoard = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const highScoreElement = document.getElementById('high-score-display');
+        const restartButton = document.getElementById('restart-button');
+        const gameMessage = document.getElementById('game-message');
+        const messageText = document.getElementById('message-text');
+        const continueButton = document.getElementById('continue-button');
+        const newGameButton = document.getElementById('new-game-button');
+
+        // Initialize the game
+        function initGame() {
+            // Clear the board
+            board = Array(config.size).fill().map(() => Array(config.size).fill(0));
+            score = 0;
+            win = false;
+            updateScore();
+            
+            // Load high score from local storage
+            loadHighScore();
+            
+            // Clear the game board UI
+            gameBoard.innerHTML = '';
+            
+            // Hide game message
+            gameMessage.classList.remove('show');
+            
+            // Create the grid cells
+            for (let row = 0; row < config.size; row++) {
+                for (let col = 0; col < config.size; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('tile');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    gameBoard.appendChild(cell);
+                }
+            }
+            
+            // Add initial tiles
+            addRandomTile();
+            addRandomTile();
+            
+            // Update the board display
+            updateBoard();
+        }
+
+        // Load high score from local storage
+        function loadHighScore() {
+            const savedHighScore = localStorage.getItem(config.localStorageKey);
+            if (savedHighScore) {
+                highScore = parseInt(savedHighScore);
+                highScoreElement.textContent = highScore;
+            }
+        }
+
+        // Save high score to local storage
+        function saveHighScore() {
+            if (score > highScore) {
+                highScore = score;
+                highScoreElement.textContent = highScore;
+                localStorage.setItem(config.localStorageKey, highScore.toString());
+            }
+        }
+
+        // Add a random tile (2 or 4) to an empty cell
+        function addRandomTile() {
+            const emptyCells = [];
+            
+            // Find all empty cells
+            for (let row = 0; row < config.size; row++) {
+                for (let col = 0; col < config.size; col++) {
+                    if (board[row][col] === 0) {
+                        emptyCells.push({ row, col });
+                    }
+                }
+            }
+            
+            // If there are empty cells, add a new tile
+            if (emptyCells.length > 0) {
+                const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                board[row][col] = Math.random() < 0.9 ? 2 : 4;
+                
+                // Mark the tile as new for animation
+                const tile = getTileElement(row, col);
+                tile.classList.add('tile-new');
+                setTimeout(() => tile.classList.remove('tile-new'), 200);
+            }
+        }
+
+        // Update the board display based on the current state
+        function updateBoard() {
+            for (let row = 0; row < config.size; row++) {
+                for (let col = 0; col < config.size; col++) {
+                    const value = board[row][col];
+                    const tile = getTileElement(row, col);
+                    
+                    // Clear the tile
+                    tile.className = 'tile';
+                    tile.textContent = '';
+                    
+                    // If the cell has a value, update the tile
+                    if (value > 0) {
+                        tile.textContent = value;
+                        tile.classList.add(`tile-${value}`);
+                    }
+                }
+            }
+        }
+
+        // Get the tile element at a specific row and column
+        function getTileElement(row, col) {
+            return document.querySelector(`.tile[data-row="${row}"][data-col="${col}"]`);
+        }
+
+        // Update the score display
+        function updateScore() {
+            scoreElement.textContent = score;
+            if (score > highScore) {
+                saveHighScore();
+            }
+        }
+
+        // Handle keyboard input
+        function handleKeyDown(event) {
+            if (event.key.startsWith('Arrow')) {
+                event.preventDefault();
+                
+                let moved = false;
+                
+                switch (event.key) {
+                    case 'ArrowUp':
+                        moved = moveTiles('up');
+                        break;
+                    case 'ArrowDown':
+                        moved = moveTiles('down');
+                        break;
+                    case 'ArrowLeft':
+                        moved = moveTiles('left');
+                        break;
+                    case 'ArrowRight':
+                        moved = moveTiles('right');
+                        break;
+                }
+                
+                if (moved) {
+                    addRandomTile();
+                    updateBoard();
+                    checkGameStatus();
+                }
+            }
+        }
+
+        // Handle touch events for swipe gestures
+        function handleTouchStart(event) {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+        }
+
+        function handleTouchEnd(event) {
+            touchEndX = event.changedTouches[0].clientX;
+            touchEndY = event.changedTouches[0].clientY;
+            handleSwipe();
+        }
+
+        // Determine swipe direction and move tiles accordingly
+        function handleSwipe() {
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+            
+            // Only consider swipes that are sufficiently long
+            if (Math.abs(dx) > 50 || Math.abs(dy) > 50) {
+                let moved = false;
+                
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    // Horizontal swipe
+                    if (dx > 0) {
+                        moved = moveTiles('right');
+                    } else {
+                        moved = moveTiles('left');
+                    }
+                } else {
+                    // Vertical swipe
+                    if (dy > 0) {
+                        moved = moveTiles('down');
+                    } else {
+                        moved = moveTiles('up');
+                    }
+                }
+                
+                if (moved) {
+                    addRandomTile();
+                    updateBoard();
+                    checkGameStatus();
+                }
+            }
+        }
+
+        // Move tiles in the specified direction and handle merging
+        function moveTiles(direction) {
+            let moved = false;
+            const newBoard = Array(config.size).fill().map(() => Array(config.size).fill(0));
+            
+            // Mark all tiles as not merged for this move
+            const merged = Array(config.size).fill().map(() => Array(config.size).fill(false));
+            
+            // Process the board based on direction
+            if (direction === 'left') {
+                for (let row = 0; row < config.size; row++) {
+                    let col = 0;
+                    let lastValue = 0;
+                    let lastCol = -1;
+                    
+                    for (let c = 0; c < config.size; c++) {
+                        if (board[row][c] !== 0) {
+                            if (lastValue === board[row][c] && !merged[row][lastCol]) {
+                                // Merge tiles
+                                newBoard[row][lastCol] = lastValue * 2;
+                                score += lastValue * 2;
+                                merged[row][lastCol] = true;
+                                markMergedTile(row, lastCol);
+                                lastValue = 0;
+                                moved = true;
+                            } else {
+                                if (col !== c) moved = true;
+                                newBoard[row][col] = board[row][c];
+                                lastValue = board[row][c];
+                                lastCol = col;
+                                col++;
+                            }
+                        }
+                    }
+                }
+            } else if (direction === 'right') {
+                for (let row = 0; row < config.size; row++) {
+                    let col = config.size - 1;
+                    let lastValue = 0;
+                    let lastCol = -1;
+                    
+                    for (let c = config.size - 1; c >= 0; c--) {
+                        if (board[row][c] !== 0) {
+                            if (lastValue === board[row][c] && !merged[row][lastCol]) {
+                                // Merge tiles
+                                newBoard[row][lastCol] = lastValue * 2;
+                                score += lastValue * 2;
+                                merged[row][lastCol] = true;
+                                markMergedTile(row, lastCol);
+                                lastValue = 0;
+                                moved = true;
+                            } else {
+                                if (col !== c) moved = true;
+                                newBoard[row][col] = board[row][c];
+                                lastValue = board[row][c];
+                                lastCol = col;
+                                col--;
+                            }
+                        }
+                    }
+                }
+            } else if (direction === 'up') {
+                for (let col = 0; col < config.size; col++) {
+                    let row = 0;
+                    let lastValue = 0;
+                    let lastRow = -1;
+                    
+                    for (let r = 0; r < config.size; r++) {
+                        if (board[r][col] !== 0) {
+                            if (lastValue === board[r][col] && !merged[lastRow][col]) {
+                                // Merge tiles
+                                newBoard[lastRow][col] = lastValue * 2;
+                                score += lastValue * 2;
+                                merged[lastRow][col] = true;
+                                markMergedTile(lastRow, col);
+                                lastValue = 0;
+                                moved = true;
+                            } else {
+                                if (row !== r) moved = true;
+                                newBoard[row][col] = board[r][col];
+                                lastValue = board[r][col];
+                                lastRow = row;
+                                row++;
+                            }
+                        }
+                    }
+                }
+            } else if (direction === 'down') {
+                for (let col = 0; col < config.size; col++) {
+                    let row = config.size - 1;
+                    let lastValue = 0;
+                    let lastRow = -1;
+                    
+                    for (let r = config.size - 1; r >= 0; r--) {
+                        if (board[r][col] !== 0) {
+                            if (lastValue === board[r][col] && !merged[lastRow][col]) {
+                                // Merge tiles
+                                newBoard[lastRow][col] = lastValue * 2;
+                                score += lastValue * 2;
+                                merged[lastRow][col] = true;
+                                markMergedTile(lastRow, col);
+                                lastValue = 0;
+                                moved = true;
+                            } else {
+                                if (row !== r) moved = true;
+                                newBoard[row][col] = board[r][col];
+                                lastValue = board[r][col];
+                                lastRow = row;
+                                row--;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (moved) {
+                board = newBoard;
+                updateScore();
+            }
+            
+            return moved;
+        }
+
+        // Mark a tile as merged for animation
+        function markMergedTile(row, col) {
+            const tile = getTileElement(row, col);
+            tile.classList.add('tile-merged');
+            setTimeout(() => tile.classList.remove('tile-merged'), 200);
+        }
+
+        // Check if the game is won or lost
+        function checkGameStatus() {
+            // Check for win
+            if (!win) {
+                for (let row = 0; row < config.size; row++) {
+                    for (let col = 0; col < config.size; col++) {
+                        if (board[row][col] === config.winValue) {
+                            win = true;
+                            showGameMessage(`You Win - Espresso Master!`, true);
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // Check for game over
+            if (isGameOver()) {
+                showGameMessage('Game Over - Try Again Brewer!', false);
+            }
+        }
+
+        // Check if the game is over (no more moves possible)
+        function isGameOver() {
+            // Check for empty cells
+            for (let row = 0; row < config.size; row++) {
+                for (let col = 0; col < config.size; col++) {
+                    if (board[row][col] === 0) {
+                        return false;
+                    }
+                }
+            }
+            
+            // Check for possible merges
+            for (let row = 0; row < config.size; row++) {
+                for (let col = 0; col < config.size; col++) {
+                    const value = board[row][col];
+                    
+                    // Check right neighbor
+                    if (col < config.size - 1 && board[row][col + 1] === value) {
+                        return false;
+                    }
+                    
+                    // Check bottom neighbor
+                    if (row < config.size - 1 && board[row + 1][col] === value) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+
+        // Show game message (win or lose)
+        function showGameMessage(text, isWin) {
+            messageText.textContent = text;
+            continueButton.style.display = isWin ? 'block' : 'none';
+            gameMessage.classList.add('show');
+            saveHighScore();
+        }
+
+        // Event listeners
+        restartButton.addEventListener('click', initGame);
+        newGameButton.addEventListener('click', () => {
+            gameMessage.classList.remove('show');
+            initGame();
+        });
+        continueButton.addEventListener('click', () => {
+            gameMessage.classList.remove('show');
+        });
+        
+        // Keyboard controls
+        document.addEventListener('keydown', handleKeyDown);
+        
+        // Touch controls
+        gameBoard.addEventListener('touchstart', handleTouchStart, { passive: false });
+        gameBoard.addEventListener('touchend', handleTouchEnd, { passive: false });
+        
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>
