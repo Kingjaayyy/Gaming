@@ -1,0 +1,9 @@
+/espreso-2048
+  ├── public/
+  │   └── favicon.ico (optional)
+  ├── src/
+  │   ├── index.html
+  │   ├── styles.css
+  │   └── script.js
+  ├── vercel.json (configuration)
+  └── README.md (optional)

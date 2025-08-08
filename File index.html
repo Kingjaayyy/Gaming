@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espresso 2048</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Espresso 2048</h1>
+    
+    <div class="game-container">
+        <div class="score-panel">
+            <div class="score-box">
+                <div class="score-title">Brew Score</div>
+                <div class="score-value" id="score">0</div>
+            </div>
+            <button class="restart-button" id="restart-button">New Brew</button>
+        </div>
+        
+        <div class="game-board" id="game-board"></div>
+        
+        <div class="game-message" id="game-message">
+            <p id="message-text"></p>
+            <div class="button-group">
+                <button id="continue-button">Keep Brewing</button>
+                <button id="new-game-button">Fresh Brew</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <p>Combine tiles to reach 2048!<br>
+        Use arrow keys or swipe gestures to move the tiles.</p>
+    </div>
+
+    <div class="high-score-note">
+        Highest Brew: <span id="high-score-display">0</span> (saved per device)
+    </div>
+
+    <div class="branding">
+        Gespresso ; it's time to <strong>BREW THE BLOCK</strong>
+        <a href="https://espressosys.com" target="_blank">espressosys.com</a>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
